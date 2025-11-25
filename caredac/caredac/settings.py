@@ -29,7 +29,8 @@ ALLOWED_HOSTS = [
     '192.168.0.127',
     '127.0.0.1', 
     'localhost',
-    'untranscendental-psychodiagnostic-nixon.ngrok-free.dev',]
+    'untranscendental-psychodiagnostic-nixon.ngrok-free.dev',
+]
 
 
 # Application definition
