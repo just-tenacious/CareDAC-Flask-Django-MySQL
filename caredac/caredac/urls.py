@@ -10,9 +10,9 @@ def home(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
+    
     # API Routes
-    path('', home),  
+    path('', home),
     path('caregiver/', include('caregiver.urls')),
     path('patients/', include('patients.urls')),
     path('caredac_admin/', include('caredac_admin.urls')),
