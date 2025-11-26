@@ -1,9 +1,12 @@
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework import status
+from rest_framework.decorators import api_view , parser_classes
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializer import CaregiverInfoSerializer, CaregiverDocumentsSerializer
 from .models import CaregiverInfo, CaregiverDocuments
 import os
+
 
 @api_view(['GET','POST'])
 def caregiver_home(request):
@@ -16,6 +19,7 @@ def caregiver_home(request):
         return Response(status)
 
 @api_view(['GET','POST'])
+@parser_classes([MultiPartParser, FormParser]) 
 def caregiverInfo(request):
     if request.method == 'GET':
         objs = CaregiverInfo.objects.all()
@@ -29,107 +33,47 @@ def caregiverInfo(request):
             return Response(serializer.data)
         return Response(serializer.errors)
 
-@api_view(['GET','POST','PUT','PATCH'])
-def caregiverDocuments(request, pk=None):
-    """
-    Handles:
-    - GET: List all documents
-    - POST: Create new documents
-    - PUT/PATCH: Update existing documents, replace files if new ones are uploaded
-    """
-    if request.method == 'GET':
-        objs = CaregiverDocuments.objects.all()
-        serializer = CaregiverDocumentsSerializer(objs, many=True)
-        return Response(serializer.data)
 
-    data = request.data.copy()
-    instance = None
-
-    # If pk is provided, try to fetch existing instance
-    if pk:
-        try:
-            instance = CaregiverDocuments.objects.get(pk=pk)
-        except CaregiverDocuments.DoesNotExist:
-            return Response({"error": "Document not found"}, status=404)
-
-    # Handle file replacement
-    file_fields = ['covid_19', 'first_aid', 'ndis', 'police', 'child_chk', 'visa', 'resume']
-    if instance:
-        for field in file_fields:
-            new_file = request.FILES.get(field)
-            if new_file:
-                # Delete old file if exists
-                old_file = getattr(instance, field)
-                if old_file and os.path.isfile(old_file.path):
-                    os.remove(old_file.path)
-                setattr(instance, field, new_file)
-
-        serializer = CaregiverDocumentsSerializer(instance, data=data, partial=True)
-    else:
-        # Creating new instance
-        for field in file_fields:
-            if field in request.FILES:
-                data[field] = request.FILES[field]
-        serializer = CaregiverDocumentsSerializer(data=data)
-
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    return Response(serializer.errors, status=400)
-
-
-# from django.http import JsonResponse
-
-# from rest_framework.decorators import api_view
-# from rest_framework.response import Response
-
-# from caregiver.serializer import CaregiverInfoSerializer , CaregiverDocumentsSerializer
-# from caregiver.models import CaregiverInfo , CaregiverDocuments
-
-# # def caregiver_home(request):
-# #     return JsonResponse({"message": "Caregiver API Root"})
-
-# # def caregiver_list(request):
-# #     return JsonResponse({"message": "List of caregivers (sample API)"})
-
-# @api_view(['GET','POST'])
-# def caregiver_home(request):
-#     status = {'message':''}
-#     if request.method == 'GET':
-#         status['message']="This is get method"
-#         print(status)
-#         return Response(status)
-#     elif request.method == 'POST':
-#         status['message']="This is post method"
-#         # data = request.data
-#         # print(data)
-#         print(status)
-#         return Response(status)
+@api_view(['GET', 'POST'])
+def caregiverDocumentsList(request):
+    """List all caregiver documents or create new one."""
     
-# @api_view(['GET','POST'])
-# def caregiverInfo(request):
-#     if request.method == 'GET':
-#         objs = CaregiverInfo.objects.all()
-#         serializer = CaregiverInfoSerializer(objs, many = True)
-#         return Response(serializer.data)
-#     else:
-#         data = request.data
-#         serializer = CaregiverInfoSerializer(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors)
+    if request.method == 'GET':
+        docs = CaregiverDocuments.objects.all()
+        serializer = CaregiverDocumentsSerializer(docs, many=True)
+        return Response(serializer.data)
 
-# @api_view(['GET','POST','PUT','PATCH'])
-# def caregiverDocuments(request):
-#     if request.method == 'GET':
-#         objs = CaregiverDocuments.objects.all()
-#         serializer = CaregiverDocumentsSerializer(objs, many = True)
-#         return Response(serializer.data)
-#     else:
-#         data = request.data
-#         serializer = CaregiverDocumentsSerializer(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors)
+    elif request.method == 'POST':
+        serializer = CaregiverDocumentsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'PUT', 'PATCH'])
+def caregiverDocuments(request, pk):
+    """Retrieve, update (PUT), or partial update (PATCH) a document record."""
+    
+    try:
+        doc = CaregiverDocuments.objects.get(pk=pk)
+    except CaregiverDocuments.DoesNotExist:
+        return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = CaregiverDocumentsSerializer(doc)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = CaregiverDocumentsSerializer(doc, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'PATCH':
+        serializer = CaregiverDocumentsSerializer(doc, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
