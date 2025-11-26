@@ -1,0 +1,503 @@
+{% extends "base-auth.html" %}
+
+{% block title %}Login - CareConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .login-card {
+        max-width: 440px;
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 2.5rem 2rem;
+    }
+
+    .form-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .form-subtitle {
+        font-size: 0.95rem;
+        color: #6b7280;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* Input Styling */
+    .form-control {
+        border: 1.5px solid #d1d5db;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        font-size: 1rem;
+        height: 48px;
+        transition: border-color 0.2s ease;
+        background: white;
+    }
+
+    .form-control:focus {
+        border-color: #1e40af;
+        box-shadow: none;
+        outline: none;
+    }
+
+    /* Input Group */
+    .input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .input-group .input-group-text {
+        background: white;
+        border: 1.5px solid #d1d5db;
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        padding: 0 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group .form-control {
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .input-group:focus-within .input-group-text,
+    .input-group:focus-within .form-control {
+        border-color: #1e40af;
+    }
+
+    /* Password Toggle */
+    .input-group .password-toggle {
+        background: white;
+        border: 1.5px solid #d1d5db;
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+        padding: 0 1rem;
+        cursor: pointer;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group .password-toggle:hover {
+        color: #1e40af;
+    }
+
+    .input-group .form-control.password-input {
+        border-radius: 0;
+        border-right: none;
+    }
+
+    .input-group:focus-within .password-toggle {
+        border-color: #1e40af;
+    }
+
+    /* Error State */
+    .input-group.has-error .input-group-text,
+    .input-group.has-error .form-control,
+    .input-group.has-error .password-toggle {
+        border-color: #dc3545 !important;
+    }
+
+    .error-message {
+        display: none;
+        font-size: 0.8rem;
+        color: #dc3545;
+        margin-top: 0.4rem;
+        padding-left: 0.25rem;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    /* Forgot Password */
+    .forgot-link {
+        text-align: right;
+        margin-bottom: 1.5rem;
+    }
+
+    .forgot-link a {
+        font-size: 0.875rem;
+        color: #1e40af;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .forgot-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* Login Button */
+    .btn-login {
+        background: #1e40af;
+        color: white;
+        border: none;
+        padding: 0.9rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .btn-login:hover:not(:disabled) {
+        background: #1e3a8a;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-login:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .btn-login .spinner-border {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-right: 0.5rem;
+    }
+
+    /* Signup Link */
+    .signup-link {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+
+    .signup-link a {
+        color: #1e40af;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .signup-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* Alert */
+    .alert-container {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Mobile */
+    @media (max-width: 576px) {
+        .login-container {
+            padding: 1rem 0.5rem;
+        }
+        .card-body {
+            padding: 2rem 1.25rem;
+        }
+        .form-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="card-body">
+            
+            <!-- Header -->
+            <h1 class="form-title">Log In</h1>
+            <p class="form-subtitle">Welcome back to CareConnect</p>
+            
+            <!-- Alert Container -->
+            <div id="alertContainer" class="alert-container"></div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" novalidate>
+                
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <div class="input-group" id="emailGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-envelope text-muted"></i>
+                        </span>
+                        <input type="email" id="email" name="email" class="form-control" 
+                               placeholder="Enter your email">
+                    </div>
+                    <div class="error-message" id="emailError"></div>
+                </div>
+                
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group" id="passwordGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-lock text-muted"></i>
+                        </span>
+                        <input type="password" id="password" name="password" class="form-control password-input" 
+                               placeholder="Enter your password">
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+                
+                <!-- Forgot Password -->
+                <div class="forgot-link">
+                    <a href="/forget-pass">Forgot Password?</a>
+                </div>
+                
+                <!-- Login Button -->
+                <button type="submit" class="btn-login" id="btnLogin">
+                    Log In
+                </button>
+                
+                <!-- Signup Link -->
+                <div class="signup-link">
+                    Don't have an account? <a href="/signup">Sign Up</a>
+                </div>
+                
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// =============================================================================
+// PASSWORD TOGGLE
+// =============================================================================
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+});
+
+// =============================================================================
+// SHOW ALERT
+// =============================================================================
+function showAlert(message, type = 'danger') {
+    const container = document.getElementById('alertContainer');
+    const iconClass = type === 'danger' ? 'exclamation-circle' : 
+                      type === 'success' ? 'check-circle' : 'info-circle';
+    
+    container.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="bi bi-${iconClass} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+// =============================================================================
+// SHOW FIELD ERROR
+// =============================================================================
+function showFieldError(fieldId, message) {
+    const errorDiv = document.getElementById(fieldId + 'Error');
+    const inputGroup = document.getElementById(fieldId + 'Group');
+    
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.classList.add('show');
+    }
+    
+    if (inputGroup) {
+        inputGroup.classList.add('has-error');
+    }
+}
+
+// =============================================================================
+// CLEAR FIELD ERROR
+// =============================================================================
+function clearFieldError(fieldId) {
+    const errorDiv = document.getElementById(fieldId + 'Error');
+    const inputGroup = document.getElementById(fieldId + 'Group');
+    
+    if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.classList.remove('show');
+    }
+    
+    if (inputGroup) {
+        inputGroup.classList.remove('has-error');
+    }
+}
+
+// =============================================================================
+// CLEAR ALL ERRORS
+// =============================================================================
+function clearAllErrors() {
+    clearFieldError('email');
+    clearFieldError('password');
+    document.getElementById('alertContainer').innerHTML = '';
+}
+
+// =============================================================================
+// VALIDATE FORM
+// =============================================================================
+function validateForm() {
+    let isValid = true;
+    clearAllErrors();
+    
+    // Email
+    const email = document.getElementById('email').value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+        showFieldError('email', 'Email is required');
+        isValid = false;
+    } else if (!emailRegex.test(email)) {
+        showFieldError('email', 'Please enter a valid email address');
+        isValid = false;
+    }
+    
+    // Password
+    const password = document.getElementById('password').value;
+    if (!password) {
+        showFieldError('password', 'Password is required');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+// =============================================================================
+// SET LOADING STATE
+// =============================================================================
+function setLoading(isLoading) {
+    const btn = document.getElementById('btnLogin');
+    
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Logging in...';
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = 'Log In';
+    }
+}
+
+// =============================================================================
+// FORM SUBMISSION
+// =============================================================================
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Validate
+    if (!validateForm()) {
+        return;
+    }
+    
+    // Set loading
+    setLoading(true);
+    
+    // Get values
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Store email for potential OTP page
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('authFlow', 'login');
+            
+            if (result.requires_verification) {
+                // Account needs OTP verification
+                showAlert(result.message || 'Please verify your account', 'warning');
+                
+                setTimeout(() => {
+                    window.location.href = result.redirect_url || '/otp?from=login';
+                }, 1500);
+                
+            } else {
+                // Login successful
+                showAlert(result.message || 'Login successful!', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = result.redirect_url || '/dashboard';
+                }, 1000);
+            }
+            
+        } else {
+            // Handle errors
+            if (result.errors && typeof result.errors === 'object') {
+                Object.entries(result.errors).forEach(([field, message]) => {
+                    showFieldError(field, message);
+                });
+            }
+            
+            showAlert(result.message || 'Login failed. Please try again.', 'danger');
+            setLoading(false);
+        }
+        
+    } catch (error) {
+        console.error('Login Error:', error);
+        showAlert('Unable to connect to server. Please try again.', 'danger');
+        setLoading(false);
+    }
+});
+
+// =============================================================================
+// CLEAR ERRORS ON INPUT
+// =============================================================================
+document.getElementById('email').addEventListener('input', function() {
+    clearFieldError('email');
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    clearFieldError('password');
+});
+</script>
+{% endblock %}

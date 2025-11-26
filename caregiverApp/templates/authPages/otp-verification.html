@@ -1,0 +1,518 @@
+{% extends "base-auth.html" %}
+
+{% block title %}OTP Verification{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f9fafb;
+    }
+
+    .otp-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .otp-card {
+        max-width: 440px;
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+    }
+
+    .otp-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+    }
+
+    .otp-subtitle {
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+
+    .user-email {
+        color: #1e40af;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .otp-inputs {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .otp-input {
+        width: 65px;
+        height: 65px;
+        border: 2px solid #d1d5db;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1a1a1a;
+        transition: all 0.2s;
+    }
+
+    .otp-input:focus {
+        outline: none;
+        border-color: #1e40af;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
+    }
+
+    .otp-input.is-invalid {
+        border-color: #dc3545;
+        animation: shake 0.3s;
+    }
+
+    .otp-input.is-valid {
+        border-color: #22c55e;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    .btn-verify {
+        background: #1e40af;
+        color: white;
+        border: none;
+        padding: 0.9rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.2s;
+        margin-bottom: 1rem;
+    }
+
+    .btn-verify:hover:not(:disabled) {
+        background: #1e3a8a;
+        color: white;
+    }
+
+    .btn-verify:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .resend-section {
+        text-align: center;
+        font-size: 0.9rem;
+        color: #6b7280;
+    }
+
+    .resend-link {
+        color: #1e40af;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .resend-link:hover:not(.disabled) {
+        text-decoration: underline;
+    }
+
+    .resend-link.disabled {
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .timer-text {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #9ca3af;
+    }
+
+    .alert-container {
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 400px) {
+        .otp-input {
+            width: 55px;
+            height: 55px;
+            font-size: 1.2rem;
+        }
+        .otp-inputs {
+            gap: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="otp-container">
+    <div class="otp-card">
+        
+        <!-- Header -->
+        <h1 class="otp-title" id="otpTitle">OTP Verification</h1>
+        <p class="otp-subtitle" id="otpSubtitle">Enter the OTP sent to your email</p>
+        <p class="user-email" id="userEmail"></p>
+        
+        <!-- Alert Container -->
+        <div id="alertContainer" class="alert-container"></div>
+        
+        <!-- OTP Form -->
+        <form id="otpForm">
+            
+            <!-- OTP Inputs -->
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-input" data-index="0" inputmode="numeric" autocomplete="one-time-code">
+                <input type="text" maxlength="1" class="otp-input" data-index="1" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" data-index="2" inputmode="numeric">
+                <input type="text" maxlength="1" class="otp-input" data-index="3" inputmode="numeric">
+            </div>
+            
+            <!-- Verify Button -->
+            <button type="submit" class="btn-verify" id="verifyBtn">
+                Verify
+            </button>
+            
+            <!-- Resend Section -->
+            <div class="resend-section">
+                <span>Didn't receive OTP? </span>
+                <a href="#" class="resend-link disabled" id="resendBtn">Resend</a>
+                <span class="timer-text" id="timerText">Resend available in 60s</span>
+            </div>
+            
+        </form>
+        
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    initializeOtpInputs();
+    initializeResendTimer();
+    displayUserEmail();
+    updatePageContent();
+});
+
+// =============================================================================
+// FLOW DETECTION
+// =============================================================================
+const urlParams = new URLSearchParams(window.location.search);
+const otpType = urlParams.get('from') || localStorage.getItem('authFlow') || 'signup';
+
+const flowConfig = {
+    login: {
+        title: "Login Verification",
+        subtitle: "Enter the OTP sent to verify your login",
+        nextPage: "/dashboard"
+    },
+    signup: {
+        title: "Verify Your Email",
+        subtitle: "Enter the OTP to complete your registration",
+        nextPage: "/dashboard"
+    },
+    'forgot-password': {
+        title: "Password Reset",
+        subtitle: "Enter the OTP to reset your password",
+        nextPage: "/reset-password"
+    }
+};
+
+const currentFlow = flowConfig[otpType] || flowConfig['signup'];
+
+// =============================================================================
+// UPDATE PAGE CONTENT
+// =============================================================================
+function updatePageContent() {
+    document.getElementById('otpTitle').textContent = currentFlow.title;
+    document.getElementById('otpSubtitle').textContent = currentFlow.subtitle;
+}
+
+// =============================================================================
+// DISPLAY USER EMAIL
+// =============================================================================
+function displayUserEmail() {
+    const email = localStorage.getItem('userEmail');
+    if (email) {
+        document.getElementById('userEmail').textContent = email;
+    } else {
+        // No email found, redirect to signup
+        window.location.href = '/signup';
+    }
+}
+
+// =============================================================================
+// OTP INPUT HANDLING
+// =============================================================================
+function initializeOtpInputs() {
+    const inputs = document.querySelectorAll('.otp-input');
+    
+    inputs.forEach((input, index) => {
+        // Auto-focus first input
+        if (index === 0) input.focus();
+        
+        // Handle input
+        input.addEventListener('input', function(e) {
+            const value = e.target.value;
+            
+            // Only allow numbers
+            if (!/^\d$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            // Clear error state
+            e.target.classList.remove('is-invalid');
+            
+            // Move to next input
+            if (value && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        });
+        
+        // Handle backspace
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace') {
+                if (!input.value && index > 0) {
+                    inputs[index - 1].focus();
+                    inputs[index - 1].value = '';
+                }
+            }
+        });
+        
+        // Handle paste
+        input.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+            
+            if (pastedData.length === 4) {
+                pastedData.split('').forEach((char, idx) => {
+                    if (inputs[idx]) {
+                        inputs[idx].value = char;
+                        inputs[idx].classList.remove('is-invalid');
+                    }
+                });
+                inputs[3].focus();
+            }
+        });
+    });
+}
+
+// =============================================================================
+// RESEND TIMER
+// =============================================================================
+let resendTimer = 60;
+let timerInterval;
+
+function initializeResendTimer() {
+    startResendTimer();
+}
+
+function startResendTimer() {
+    const resendBtn = document.getElementById('resendBtn');
+    const timerText = document.getElementById('timerText');
+    
+    resendBtn.classList.add('disabled');
+    resendTimer = 60;
+    
+    timerInterval = setInterval(() => {
+        resendTimer--;
+        timerText.textContent = `Resend available in ${resendTimer}s`;
+        
+        if (resendTimer <= 0) {
+            clearInterval(timerInterval);
+            resendBtn.classList.remove('disabled');
+            timerText.textContent = '';
+        }
+    }, 1000);
+}
+
+// =============================================================================
+// SHOW ALERT
+// =============================================================================
+function showAlert(message, type = 'danger') {
+    const container = document.getElementById('alertContainer');
+    const iconClass = type === 'danger' ? 'exclamation-circle' : 
+                      type === 'success' ? 'check-circle' : 'info-circle';
+    
+    container.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show py-2" role="alert">
+            <i class="bi bi-${iconClass} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+}
+
+// =============================================================================
+// GET OTP VALUE
+// =============================================================================
+function getOtpValue() {
+    const inputs = document.querySelectorAll('.otp-input');
+    return Array.from(inputs).map(inp => inp.value).join('');
+}
+
+// =============================================================================
+// SET LOADING STATE
+// =============================================================================
+function setLoading(isLoading) {
+    const btn = document.getElementById('verifyBtn');
+    
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Verifying...
+        `;
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = 'Verify';
+    }
+}
+
+// =============================================================================
+// RESEND OTP
+// =============================================================================
+document.getElementById('resendBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    
+    if (this.classList.contains('disabled')) return;
+    
+    const email = localStorage.getItem('userEmail');
+    if (!email) {
+        showAlert('Session expired. Please signup again.', 'danger');
+        setTimeout(() => window.location.href = '/signup', 2000);
+        return;
+    }
+    
+    // Show loading
+    const originalText = this.textContent;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    this.classList.add('disabled');
+    
+    try {
+        const response = await fetch('/api/resend-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, type: otpType })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showAlert('New OTP sent! Check your console.', 'success');
+            
+            // Clear inputs
+            document.querySelectorAll('.otp-input').forEach(inp => {
+                inp.value = '';
+                inp.classList.remove('is-invalid', 'is-valid');
+            });
+            document.querySelector('.otp-input').focus();
+            
+            // Restart timer
+            this.textContent = originalText;
+            startResendTimer();
+        } else {
+            showAlert(result.message || 'Failed to resend OTP', 'danger');
+            this.textContent = originalText;
+            this.classList.remove('disabled');
+        }
+        
+    } catch (error) {
+        console.error('Resend Error:', error);
+        showAlert('Unable to resend OTP. Please try again.', 'danger');
+        this.textContent = originalText;
+        this.classList.remove('disabled');
+    }
+});
+
+// =============================================================================
+// VERIFY OTP
+// =============================================================================
+document.getElementById('otpForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const otpValue = getOtpValue();
+    const inputs = document.querySelectorAll('.otp-input');
+    
+    // Validate OTP length
+    if (otpValue.length !== 4) {
+        inputs.forEach(inp => {
+            if (!inp.value) inp.classList.add('is-invalid');
+        });
+        showAlert('Please enter the complete 4-digit OTP', 'warning');
+        return;
+    }
+    
+    const email = localStorage.getItem('userEmail');
+    if (!email) {
+        showAlert('Session expired. Please signup again.', 'danger');
+        setTimeout(() => window.location.href = '/signup', 2000);
+        return;
+    }
+    
+    setLoading(true);
+    
+    try {
+        const response = await fetch('/api/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                otp: otpValue,
+                email: email,
+                type: otpType
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Success! Mark inputs as valid
+            inputs.forEach(inp => inp.classList.add('is-valid'));
+            
+            showAlert('OTP verified! Account created successfully!', 'success');
+            
+            // Clear auth flow data
+            localStorage.removeItem('authFlow');
+            localStorage.setItem('isVerified', 'true');
+            
+            // Redirect
+            setTimeout(() => {
+                window.location.href = result.redirect_url || currentFlow.nextPage;
+            }, 1500);
+            
+        } else {
+            // Invalid OTP
+            inputs.forEach(inp => inp.classList.add('is-invalid'));
+            showAlert(result.message || 'Invalid OTP. Please try again.', 'danger');
+            setLoading(false);
+            
+            // Clear inputs
+            setTimeout(() => {
+                inputs.forEach(inp => inp.value = '');
+                inputs[0].focus();
+            }, 500);
+        }
+        
+    } catch (error) {
+        console.error('Verify Error:', error);
+        showAlert('Unable to verify OTP. Please try again.', 'danger');
+        setLoading(false);
+    }
+});
+
+console.log('OTP Page Loaded - Type:', otpType);
+</script>
+{% endblock %}

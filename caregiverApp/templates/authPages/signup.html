@@ -1,0 +1,849 @@
+{% extends "base-auth.html" %}
+
+{% block title %}Sign Up - CareConnect{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+
+    .signup-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .signup-card {
+        max-width: 460px;
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: white;
+        border-bottom: none;
+        padding: 2rem 2rem 0;
+    }
+
+    .card-body {
+        padding: 1.5rem 2rem 2rem;
+    }
+
+    .form-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 0.25rem;
+    }
+
+    .form-subtitle {
+        font-size: 0.95rem;
+        color: #6b7280;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* ============================================ */
+    /* CLEAN INPUT STYLING                          */
+    /* ============================================ */
+    .form-control {
+        border: 1.5px solid #d1d5db;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        font-size: 1rem;
+        height: 48px;
+        transition: border-color 0.2s ease;
+        background: white;
+    }
+
+    .form-control:focus {
+        border-color: #1e40af;
+        box-shadow: none;
+        outline: none;
+    }
+
+    /* Input Group - Consistent Borders */
+    .input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .input-group .input-group-text {
+        background: white;
+        border: 1.5px solid #d1d5db;
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        padding: 0 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group .form-control {
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .input-group .form-control:focus {
+        border-color: #d1d5db;
+        border-left: none;
+    }
+
+    /* When input group is focused, highlight all borders */
+    .input-group:focus-within .input-group-text {
+        border-color: #1e40af;
+    }
+
+    .input-group:focus-within .form-control {
+        border-color: #1e40af;
+    }
+
+    /* Password Toggle Button */
+    .input-group .password-toggle {
+        background: white;
+        border: 1.5px solid #d1d5db;
+        border-left: none;
+        border-radius: 0 10px 10px 0;
+        padding: 0 1rem;
+        cursor: pointer;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group .password-toggle:hover {
+        color: #1e40af;
+    }
+
+    .input-group .form-control.password-input {
+        border-radius: 0;
+        border-right: none;
+    }
+
+    .input-group:focus-within .password-toggle {
+        border-color: #1e40af;
+    }
+
+    /* ============================================ */
+    /* ERROR STATE - Simple Red Border             */
+    /* ============================================ */
+    .input-group.has-error .input-group-text,
+    .input-group.has-error .form-control,
+    .input-group.has-error .password-toggle {
+        border-color: #dc3545 !important;
+    }
+
+    .form-control.has-error {
+        border-color: #dc3545 !important;
+    }
+
+    /* Error Message Below Field */
+    .error-message {
+        display: none;
+        font-size: 0.8rem;
+        color: #dc3545;
+        margin-top: 0.4rem;
+        padding-left: 0.25rem;
+    }
+
+    .error-message.show {
+        display: block;
+    }
+
+    /* ============================================ */
+    /* PROFILE UPLOAD                              */
+    /* ============================================ */
+    .profile-input-wrapper {
+        display: flex;
+        align-items: center;
+        border: 1.5px solid #d1d5db;
+        border-radius: 10px;
+        height: 48px;
+        background: white;
+        overflow: hidden;
+    }
+
+    .profile-filename {
+        flex: 1;
+        padding: 0.85rem 1rem;
+        font-size: 1rem;
+        color: #6b7280;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .upload-text {
+        padding: 0 1rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #1e40af;
+        cursor: pointer;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border-left: 1.5px solid #d1d5db;
+    }
+
+    .upload-text:hover {
+        background: #e2e8f0;
+    }
+
+    #profilePic {
+        display: none;
+    }
+
+    /* ============================================ */
+    /* GENDER RADIO                                */
+    /* ============================================ */
+    .gender-group {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .form-check-input:checked {
+        background-color: #ff7b00;
+        border-color: #ff7b00;
+    }
+
+    .form-check-label {
+        font-size: 0.95rem;
+        color: #374151;
+    }
+
+    /* ============================================ */
+    /* TERMS CHECKBOX                              */
+    /* ============================================ */
+    .terms-check {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .terms-check a {
+        color: #1e40af;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .terms-check a:hover {
+        text-decoration: underline;
+    }
+
+    /* ============================================ */
+    /* SUBMIT BUTTON                               */
+    /* ============================================ */
+    .btn-continue {
+        background: #1e40af;
+        color: white;
+        border: none;
+        padding: 0.9rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+
+    .btn-continue:hover:not(:disabled) {
+        background: #1e3a8a;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-continue:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .btn-continue .spinner-border {
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-right: 0.5rem;
+    }
+
+    /* ============================================ */
+    /* LOGIN LINK                                  */
+    /* ============================================ */
+    .login-link {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-align: center;
+        margin-top: 1rem;
+    }
+
+    .login-link a {
+        color: #1e40af;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* ============================================ */
+    /* ALERT                                       */
+    /* ============================================ */
+    .alert-container {
+        margin-bottom: 1rem;
+    }
+
+    /* ============================================ */
+    /* MOBILE RESPONSIVE                           */
+    /* ============================================ */
+    @media (max-width: 576px) {
+        .signup-container { 
+            padding: 1rem 0.5rem; 
+        }
+        .card-header, .card-body { 
+            padding-left: 1.25rem; 
+            padding-right: 1.25rem; 
+        }
+        .form-title { 
+            font-size: 1.5rem; 
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="signup-container">
+    <div class="signup-card">
+        
+        <!-- Header -->
+        <div class="card-header">
+            <h1 class="form-title">Create your profile</h1>
+            <p class="form-subtitle">Enter basic details for now</p>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body">
+            
+            <!-- Alert Container -->
+            <div id="alertContainer" class="alert-container"></div>
+
+            <!-- Form -->
+            <form id="signupForm" novalidate>
+                
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="fullName" class="form-label">Full Name</label>
+                    <div class="input-group" id="fullNameGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-person text-muted"></i>
+                        </span>
+                        <input type="text" id="fullName" name="fullName" class="form-control" 
+                               placeholder="Enter your full name">
+                    </div>
+                    <div class="error-message" id="fullNameError"></div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <div class="input-group" id="emailGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-envelope text-muted"></i>
+                        </span>
+                        <input type="email" id="email" name="email" class="form-control" 
+                               placeholder="Enter your email">
+                    </div>
+                    <div class="error-message" id="emailError"></div>
+                </div>
+
+                <!-- Mobile Number -->
+                <div class="form-group">
+                    <label for="mobile" class="form-label">Mobile Number</label>
+                    <div class="input-group" id="mobileGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-telephone text-muted"></i>
+                        </span>
+                        <input type="tel" id="mobile" name="mobile" class="form-control" 
+                               placeholder="Enter mobile number">
+                    </div>
+                    <div class="error-message" id="mobileError"></div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group" id="passwordGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-lock text-muted"></i>
+                        </span>
+                        <input type="password" id="password" name="password" class="form-control password-input" 
+                               placeholder="Enter password (min 6 characters)">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" id="passwordError"></div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <div class="input-group" id="confirmPasswordGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-lock text-muted"></i>
+                        </span>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control password-input" 
+                               placeholder="Confirm password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="error-message" id="confirmPasswordError"></div>
+                </div>
+
+                <!-- Date of Birth -->
+                <div class="form-group">
+                    <label for="dob" class="form-label">Date of Birth</label>
+                    <div class="input-group" id="dobGroup">
+                        <span class="input-group-text">
+                            <i class="bi bi-calendar3 text-muted"></i>
+                        </span>
+                        <input type="date" id="dob" name="dob" class="form-control">
+                    </div>
+                    <div class="error-message" id="dobError"></div>
+                </div>
+
+                <!-- Profile Picture (Optional) -->
+                <div class="form-group">
+                    <label class="form-label">Profile Picture <span class="text-muted">(Optional)</span></label>
+                    <div class="profile-input-wrapper" id="profileWrapper">
+                        <input type="file" id="profilePic" name="profilePic" accept="image/*">
+                        <span class="profile-filename" id="profileFilename">No file chosen</span>
+                        <span class="upload-text" onclick="document.getElementById('profilePic').click()">Browse</span>
+                    </div>
+                </div>
+
+                <!-- Gender -->
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <div class="gender-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="gender" id="male" value="Male" checked>
+                            <label class="form-check-label" for="male">Male</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="gender" id="female" value="Female">
+                            <label class="form-check-label" for="female">Female</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="gender" id="nonbinary" value="Non-Binary">
+                            <label class="form-check-label" for="nonbinary">Non-Binary</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms -->
+                <div class="form-group">
+                    <div class="form-check terms-check">
+                        <input class="form-check-input" type="checkbox" id="termsCheck">
+                        <label class="form-check-label" for="termsCheck">
+                            By continuing, you agree to our <a href="#">Terms and Conditions</a>
+                        </label>
+                    </div>
+                    <div class="error-message" id="termsError"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-continue" id="btnContinue">
+                    Continue
+                </button>
+
+                <!-- Login Link -->
+                <div class="login-link">
+                    Already have an account? <a href="/login">Login</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// =============================================================================
+// CONFIGURATION - EASY TO CHANGE
+// =============================================================================
+const CONFIG = {
+    MIN_AGE: 18,           // Change to 17 if needed
+    MAX_AGE: 120,
+    MIN_PASSWORD_LENGTH: 6,
+    MIN_PHONE_DIGITS: 10,
+    MAX_PHONE_DIGITS: 15
+};
+
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDateConstraints();
+    initializePhoneInput();
+    initializeProfileUpload();
+});
+
+// =============================================================================
+// DATE CONSTRAINTS
+// =============================================================================
+function initializeDateConstraints() {
+    const dobInput = document.getElementById('dob');
+    
+    // Max date: Must be at least MIN_AGE years old
+    const maxDate = new Date();
+    maxDate.setFullYear(maxDate.getFullYear() - CONFIG.MIN_AGE);
+    dobInput.setAttribute('max', maxDate.toISOString().split('T')[0]);
+    
+    // Min date: MAX_AGE years ago
+    const minDate = new Date();
+    minDate.setFullYear(minDate.getFullYear() - CONFIG.MAX_AGE);
+    dobInput.setAttribute('min', minDate.toISOString().split('T')[0]);
+}
+
+// =============================================================================
+// PHONE INPUT - Numbers Only
+// =============================================================================
+function initializePhoneInput() {
+    const mobileInput = document.getElementById('mobile');
+    mobileInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^\d+]/g, '');
+        if (value.indexOf('+') > 0) {
+            value = '+' + value.replace(/\+/g, '');
+        }
+        e.target.value = value.slice(0, CONFIG.MAX_PHONE_DIGITS);
+    });
+}
+
+// =============================================================================
+// PROFILE UPLOAD
+// =============================================================================
+function initializeProfileUpload() {
+    document.getElementById('profilePic').addEventListener('change', function(e) {
+        const filename = document.getElementById('profileFilename');
+        
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            
+            if (!file.type.startsWith('image/')) {
+                showAlert('Please select a valid image file', 'danger');
+                e.target.value = '';
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showAlert('Image size should be less than 5MB', 'danger');
+                e.target.value = '';
+                return;
+            }
+            
+            filename.textContent = file.name;
+            filename.style.color = '#1a1a1a';
+        } else {
+            filename.textContent = 'No file chosen';
+            filename.style.color = '#6b7280';
+        }
+    });
+}
+
+// =============================================================================
+// PASSWORD TOGGLE
+// =============================================================================
+function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+}
+
+// =============================================================================
+// SHOW ALERT (Top of form)
+// =============================================================================
+function showAlert(message, type = 'danger') {
+    const container = document.getElementById('alertContainer');
+    const iconClass = type === 'danger' ? 'exclamation-circle' : 
+                      type === 'success' ? 'check-circle' : 'info-circle';
+    
+    container.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="bi bi-${iconClass} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// =============================================================================
+// SHOW FIELD ERROR (Below field)
+// =============================================================================
+function showFieldError(fieldId, message) {
+    const errorDiv = document.getElementById(fieldId + 'Error');
+    const inputGroup = document.getElementById(fieldId + 'Group');
+    
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.classList.add('show');
+    }
+    
+    if (inputGroup) {
+        inputGroup.classList.add('has-error');
+    }
+}
+
+// =============================================================================
+// CLEAR FIELD ERROR
+// =============================================================================
+function clearFieldError(fieldId) {
+    const errorDiv = document.getElementById(fieldId + 'Error');
+    const inputGroup = document.getElementById(fieldId + 'Group');
+    
+    if (errorDiv) {
+        errorDiv.textContent = '';
+        errorDiv.classList.remove('show');
+    }
+    
+    if (inputGroup) {
+        inputGroup.classList.remove('has-error');
+    }
+}
+
+// =============================================================================
+// CLEAR ALL ERRORS
+// =============================================================================
+function clearAllErrors() {
+    document.querySelectorAll('.error-message').forEach(el => {
+        el.textContent = '';
+        el.classList.remove('show');
+    });
+    document.querySelectorAll('.has-error').forEach(el => {
+        el.classList.remove('has-error');
+    });
+    document.getElementById('alertContainer').innerHTML = '';
+}
+
+// =============================================================================
+// CALCULATE AGE
+// =============================================================================
+function calculateAge(dobString) {
+    const dob = new Date(dobString);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+    }
+    return age;
+}
+
+// =============================================================================
+// VALIDATE ALL FIELDS
+// =============================================================================
+function validateForm() {
+    let isValid = true;
+    clearAllErrors();
+    
+    // Full Name
+    const fullName = document.getElementById('fullName').value.trim();
+    if (!fullName) {
+        showFieldError('fullName', 'Full name is required');
+        isValid = false;
+    } else if (fullName.length < 2) {
+        showFieldError('fullName', 'Full name must be at least 2 characters');
+        isValid = false;
+    }
+    
+    // Email
+    const email = document.getElementById('email').value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+        showFieldError('email', 'Email is required');
+        isValid = false;
+    } else if (!emailRegex.test(email)) {
+        showFieldError('email', 'Please enter a valid email address');
+        isValid = false;
+    }
+    
+    // Mobile
+    const mobile = document.getElementById('mobile').value.trim();
+    const mobileDigits = mobile.replace(/\D/g, '');
+    if (!mobile) {
+        showFieldError('mobile', 'Mobile number is required');
+        isValid = false;
+    } else if (mobileDigits.length < CONFIG.MIN_PHONE_DIGITS) {
+        showFieldError('mobile', `Mobile number must be at least ${CONFIG.MIN_PHONE_DIGITS} digits`);
+        isValid = false;
+    }
+    
+    // Password
+    const password = document.getElementById('password').value;
+    if (!password) {
+        showFieldError('password', 'Password is required');
+        isValid = false;
+    } else if (password.length < CONFIG.MIN_PASSWORD_LENGTH) {
+        showFieldError('password', `Password must be at least ${CONFIG.MIN_PASSWORD_LENGTH} characters`);
+        isValid = false;
+    }
+    
+    // Confirm Password
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    if (!confirmPassword) {
+        showFieldError('confirmPassword', 'Please confirm your password');
+        isValid = false;
+    } else if (password !== confirmPassword) {
+        showFieldError('confirmPassword', 'Passwords do not match');
+        isValid = false;
+    }
+    
+    // Date of Birth
+    const dob = document.getElementById('dob').value;
+    if (!dob) {
+        showFieldError('dob', 'Date of birth is required');
+        isValid = false;
+    } else {
+        const age = calculateAge(dob);
+        if (age < CONFIG.MIN_AGE) {
+            showFieldError('dob', `You must be at least ${CONFIG.MIN_AGE} years old`);
+            isValid = false;
+        } else if (age > CONFIG.MAX_AGE) {
+            showFieldError('dob', 'Please enter a valid date of birth');
+            isValid = false;
+        }
+    }
+    
+    // Terms
+    const termsChecked = document.getElementById('termsCheck').checked;
+    if (!termsChecked) {
+        showFieldError('terms', 'You must agree to the terms and conditions');
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+// =============================================================================
+// SET LOADING STATE
+// =============================================================================
+function setLoading(isLoading) {
+    const btn = document.getElementById('btnContinue');
+    
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = 'Continue';
+    }
+}
+
+// =============================================================================
+// FORM SUBMISSION
+// =============================================================================
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Validate all fields
+    if (!validateForm()) {
+        const firstError = document.querySelector('.error-message.show');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+    
+    // Set loading
+    setLoading(true);
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('fullName', document.getElementById('fullName').value.trim());
+    formData.append('email', document.getElementById('email').value.trim().toLowerCase());
+    formData.append('mobile', document.getElementById('mobile').value.trim());
+    formData.append('password', document.getElementById('password').value);
+    formData.append('confirmPassword', document.getElementById('confirmPassword').value);
+    formData.append('dob', document.getElementById('dob').value);
+    formData.append('gender', document.querySelector('input[name="gender"]:checked').value);
+    formData.append('terms', 'true');
+    
+    // ============================================================
+    // ADD PROFILE PICTURE TO FORM DATA
+    // ============================================================
+    const profilePicInput = document.getElementById('profilePic');
+    if (profilePicInput.files && profilePicInput.files[0]) {
+        formData.append('profilePic', profilePicInput.files[0]);
+        console.log('📸 Profile picture attached:', profilePicInput.files[0].name);
+    }
+    
+    try {
+        const response = await fetch('/api/signup', {
+            method: 'POST',
+            body: formData  // Don't set Content-Type header - browser will set it with boundary
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            localStorage.setItem('userEmail', document.getElementById('email').value.trim().toLowerCase());
+            localStorage.setItem('userName', document.getElementById('fullName').value.trim());
+            localStorage.setItem('authFlow', 'signup');
+            
+            showAlert(result.message || 'OTP sent to your email!', 'success');
+            
+            setTimeout(() => {
+                window.location.href = result.redirect_url || '/otp?from=signup';
+            }, 1000);
+            
+        } else {
+            if (result.errors && typeof result.errors === 'object') {
+                Object.entries(result.errors).forEach(([field, message]) => {
+                    showFieldError(field, message);
+                });
+                
+                const firstError = document.querySelector('.error-message.show');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            
+            if (result.message) {
+                showAlert(result.message, 'danger');
+            }
+            
+            setLoading(false);
+        }
+        
+    } catch (error) {
+        console.error('Signup Error:', error);
+        showAlert('Unable to connect to server. Please try again.', 'danger');
+        setLoading(false);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,753 @@
+{% extends "base-auth.html" %}
+
+{% block title %}Enter Member Details - {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+  /* ==================== MINIMAL CUSTOM STYLES ==================== */
+  .icon-input {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.7rem;
+  }
+
+  .icon-input i {
+    color: #64748b;
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+  }
+
+  .icon-input input {
+    border: none;
+    flex: 1;
+    outline: none;
+    font-size: 1rem;
+  }
+
+  .icon-input:focus-within {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 0.2rem rgba(29, 78, 216, 0.15);
+  }
+
+  .location-btn {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    padding: 0.8rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #111827;
+    font-weight: 500;
+  }
+
+  .location-btn:hover {
+    background-color: #f8fafc;
+    border-color: #1d4ed8;
+  }
+
+  .location-btn:active {
+    transform: scale(0.98);
+  }
+
+  .location-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* Phone validation feedback */
+  .phone-error {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: none;
+  }
+
+  .icon-input.error {
+    border-color: #dc2626;
+  }
+
+  .icon-input.success {
+    border-color: #16a34a;
+  }
+
+  /* Flatpickr Custom Styling */
+  .flatpickr-calendar {
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: none;
+  }
+
+  .flatpickr-day.selected {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+  }
+
+  .flatpickr-day.selected:hover {
+    background: #1e40af;
+    border-color: #1e40af;
+  }
+
+  .flatpickr-day:hover {
+    background: #e0e7ff;
+    border-color: #e0e7ff;
+  }
+
+  .flatpickr-current-month .flatpickr-monthDropdown-months {
+    appearance: none;
+  }
+
+  .flatpickr-months .flatpickr-prev-month:hover svg,
+  .flatpickr-months .flatpickr-next-month:hover svg {
+    fill: #1d4ed8;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-md-5" style="max-width: 540px;">
+
+  <!-- Page Header -->
+  <div class="mb-4">
+    <h4 class="fw-bold mb-2">Enter Member Details</h4>
+    <p class="text-muted small mb-0">Need to add perfect details</p>
+  </div>
+
+  <!-- Form -->
+  <form method="POST" action="/enter-member-details" id="memberForm">
+
+    <!-- Full Name -->
+    <div class="mb-3">
+      <label for="fullName" class="form-label fw-semibold">Full Name</label>
+      <div class="icon-input">
+        <i class="fas fa-user"></i>
+        <input 
+          type="text" 
+          id="fullName"
+          name="fullName" 
+          placeholder="Enter full name" 
+          required 
+        />
+      </div>
+    </div>
+
+    <!-- Date of Birth -->
+    <div class="mb-3">
+      <label for="dob" class="form-label fw-semibold">Date of Birth</label>
+      <div class="icon-input">
+        <i class="fas fa-calendar-alt"></i>
+        <input 
+          type="text" 
+          id="dob"
+          name="dob" 
+          placeholder="DD/MM/YYYY" 
+          required 
+          readonly
+        />
+      </div>
+    </div>
+
+    <!-- Phone Number -->
+    <div class="mb-3">
+      <label for="phone" class="form-label fw-semibold">Phone number</label>
+      <div class="icon-input" id="phoneInputWrapper">
+        <i class="fas fa-phone-alt"></i>
+        <input 
+          type="tel" 
+          id="phone"
+          name="phone" 
+          placeholder="Enter 10 digit number" 
+          maxlength="10"
+          required 
+        />
+      </div>
+      <div class="phone-error" id="phoneError">Please enter exactly 10 digits</div>
+    </div>
+
+    <!-- Gender -->
+    <div class="mb-4">
+      <label class="form-label fw-semibold mb-2">Gender</label>
+      <div class="d-flex gap-3">
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="radio" 
+            name="gender" 
+            id="male" 
+            value="Male" 
+            checked
+          />
+          <label class="form-check-label fw-semibold" for="male">
+            Male
+          </label>
+        </div>
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="radio" 
+            name="gender" 
+            id="female" 
+            value="Female"
+          />
+          <label class="form-check-label fw-semibold" for="female">
+            Female
+          </label>
+        </div>
+        <div class="form-check">
+          <input 
+            class="form-check-input" 
+            type="radio" 
+            name="gender" 
+            id="nonbinary" 
+            value="Non-Binary"
+          />
+          <label class="form-check-label fw-semibold" for="nonbinary">
+            Non-Binary
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Button -->
+    <div class="mb-4">
+      <button type="button" class="location-btn" id="locationBtn" onclick="getLocation()">
+        <span>
+          <i class="fas fa-crosshairs me-2 text-primary"></i>
+          Use my current location
+        </span>
+        <i class="bi bi-chevron-right text-muted"></i>
+      </button>
+    </div>
+
+    <!-- Address Line 1 -->
+    <div class="mb-3">
+      <label for="address1" class="form-label fw-semibold">Address Line 1</label>
+      <input 
+        type="text" 
+        class="form-control" 
+        id="address1"
+        name="address1" 
+        placeholder="Enter address" 
+        required
+      />
+    </div>
+
+    <!-- Address Line 2 -->
+    <div class="mb-3">
+      <label for="address2" class="form-label fw-semibold">Address Line 2</label>
+      <input 
+        type="text" 
+        class="form-control" 
+        id="address2"
+        name="address2" 
+        placeholder="Enter address"
+      />
+    </div>
+
+    <!-- Country and State -->
+    <div class="row g-3 mb-3">
+      <div class="col-6">
+        <label for="country" class="form-label fw-semibold">Country</label>
+        <select class="form-select" id="country" name="country" required>
+          <option value="">Select Country</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label for="state" class="form-label fw-semibold">State</label>
+        <select class="form-select" id="state" name="state" required>
+          <option value="">Select State</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- City and Pin Code -->
+    <div class="row g-3 mb-4">
+      <div class="col-6">
+        <label for="city" class="form-label fw-semibold">City</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="city"
+          name="city" 
+          placeholder="Enter city" 
+          required
+        />
+      </div>
+      <div class="col-6">
+        <label for="pincode" class="form-label fw-semibold">Pin Code</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="pincode"
+          name="pincode" 
+          placeholder="Enter pin code" 
+          required
+        />
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <button type="submit" class="btn btn-primary rounded-pill w-100 py-3 fw-semibold shadow-sm">
+      Save
+    </button>
+
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+  // ==================== COUNTRIES AND STATES DATA ====================
+  const countriesAndStates = {
+    "Afghanistan": ["Kabul", "Kandahar", "Herat", "Balkh", "Nangarhar"],
+    "Albania": ["Tirana", "Durrës", "Vlorë", "Elbasan", "Shkodër"],
+    "Algeria": ["Algiers", "Oran", "Constantine", "Annaba", "Blida"],
+    "Argentina": ["Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán"],
+    "Australia": ["New South Wales", "Victoria", "Queensland", "Western Australia", "South Australia", "Tasmania", "Northern Territory", "Australian Capital Territory"],
+    "Austria": ["Vienna", "Lower Austria", "Upper Austria", "Styria", "Tyrol", "Carinthia", "Salzburg", "Vorarlberg", "Burgenland"],
+    "Bangladesh": ["Dhaka", "Chittagong", "Khulna", "Rajshahi", "Sylhet", "Barisal", "Rangpur", "Mymensingh"],
+    "Belgium": ["Brussels", "Flemish Brabant", "Walloon Brabant", "Antwerp", "East Flanders", "West Flanders", "Hainaut", "Liège", "Limburg", "Luxembourg", "Namur"],
+    "Brazil": ["São Paulo", "Rio de Janeiro", "Minas Gerais", "Bahia", "Paraná", "Rio Grande do Sul", "Pernambuco", "Ceará", "Pará", "Santa Catarina"],
+    "Canada": ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba", "Saskatchewan", "Nova Scotia", "New Brunswick", "Newfoundland and Labrador", "Prince Edward Island"],
+    "Chile": ["Santiago Metropolitan", "Valparaíso", "Biobío", "Araucanía", "Los Lagos"],
+    "China": ["Beijing", "Shanghai", "Guangdong", "Sichuan", "Jiangsu", "Zhejiang", "Henan", "Shandong", "Hubei", "Hunan"],
+    "Colombia": ["Bogotá", "Antioquia", "Valle del Cauca", "Cundinamarca", "Atlántico"],
+    "Czech Republic": ["Prague", "Central Bohemian", "South Moravian", "Moravian-Silesian", "Olomouc"],
+    "Denmark": ["Capital Region", "Zealand", "South Denmark", "Central Denmark", "North Denmark"],
+    "Egypt": ["Cairo", "Alexandria", "Giza", "Qalyubia", "Sharqia"],
+    "Finland": ["Uusimaa", "Pirkanmaa", "Southwest Finland", "North Ostrobothnia", "Central Finland"],
+    "France": ["Île-de-France", "Auvergne-Rhône-Alpes", "Nouvelle-Aquitaine", "Occitanie", "Hauts-de-France", "Provence-Alpes-Côte d'Azur", "Grand Est", "Pays de la Loire", "Brittany", "Normandy"],
+    "Germany": ["Bavaria", "North Rhine-Westphalia", "Baden-Württemberg", "Lower Saxony", "Hesse", "Saxony", "Rhineland-Palatinate", "Berlin", "Schleswig-Holstein", "Brandenburg"],
+    "Greece": ["Attica", "Central Macedonia", "Western Greece", "Crete", "Thessaly"],
+    "Hungary": ["Budapest", "Pest", "Borsod-Abaúj-Zemplén", "Hajdú-Bihar", "Csongrád"],
+    "Iceland": ["Capital Region", "Southern Peninsula", "Western Region", "Westfjords", "Northwest"],
+    "India": ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Jammu and Kashmir", "Ladakh"],
+    "Indonesia": ["Jakarta", "West Java", "East Java", "Central Java", "Banten", "North Sumatra", "South Sulawesi"],
+    "Iran": ["Tehran", "Isfahan", "Razavi Khorasan", "Fars", "Khuzestan"],
+    "Iraq": ["Baghdad", "Basra", "Nineveh", "Erbil", "Sulaymaniyah"],
+    "Ireland": ["Dublin", "Cork", "Limerick", "Galway", "Waterford"],
+    "Israel": ["Jerusalem", "Tel Aviv", "Haifa", "Central", "Southern"],
+    "Italy": ["Lazio", "Lombardy", "Campania", "Sicily", "Veneto", "Piedmont", "Emilia-Romagna", "Apulia", "Tuscany", "Calabria"],
+    "Japan": ["Tokyo", "Osaka", "Kanagawa", "Aichi", "Saitama", "Chiba", "Hyōgo", "Hokkaido", "Fukuoka", "Shizuoka"],
+    "Kenya": ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret"],
+    "Malaysia": ["Selangor", "Johor", "Sabah", "Sarawak", "Perak", "Penang", "Kuala Lumpur"],
+    "Mexico": ["Mexico City", "State of Mexico", "Jalisco", "Nuevo León", "Puebla", "Guanajuato", "Chiapas", "Veracruz"],
+    "Netherlands": ["North Holland", "South Holland", "North Brabant", "Gelderland", "Utrecht", "Limburg", "Overijssel"],
+    "New Zealand": ["Auckland", "Wellington", "Canterbury", "Waikato", "Bay of Plenty", "Otago"],
+    "Nigeria": ["Lagos", "Kano", "Rivers", "Kaduna", "Oyo", "Abuja"],
+    "Norway": ["Oslo", "Viken", "Vestland", "Trøndelag", "Rogaland"],
+    "Pakistan": ["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad"],
+    "Peru": ["Lima", "Arequipa", "La Libertad", "Piura", "Lambayeque"],
+    "Philippines": ["Metro Manila", "Calabarzon", "Central Luzon", "Central Visayas", "Western Visayas"],
+    "Poland": ["Masovian", "Silesian", "Greater Poland", "Lesser Poland", "Lower Silesian"],
+    "Portugal": ["Lisbon", "Porto", "Faro", "Braga", "Coimbra"],
+    "Romania": ["Bucharest", "Iași", "Cluj", "Timiș", "Constanța"],
+    "Russia": ["Moscow", "Saint Petersburg", "Moscow Oblast", "Krasnodar Krai", "Sverdlovsk Oblast"],
+    "Saudi Arabia": ["Riyadh", "Makkah", "Eastern Province", "Madinah", "Asir"],
+    "Singapore": ["Central Region", "North Region", "East Region", "West Region", "North-East Region"],
+    "South Africa": ["Gauteng", "KwaZulu-Natal", "Western Cape", "Eastern Cape", "Limpopo"],
+    "South Korea": ["Seoul", "Busan", "Incheon", "Daegu", "Daejeon", "Gwangju", "Gyeonggi"],
+    "Spain": ["Andalusia", "Catalonia", "Madrid", "Valencia", "Galicia", "Castile and León", "Basque Country"],
+    "Sri Lanka": ["Western Province", "Central Province", "Southern Province", "Northern Province", "Eastern Province"],
+    "Sweden": ["Stockholm", "Västra Götaland", "Skåne", "Uppsala", "Östergötland"],
+    "Switzerland": ["Zurich", "Bern", "Vaud", "Aargau", "Geneva", "Lucerne"],
+    "Thailand": ["Bangkok", "Chon Buri", "Nonthaburi", "Chiang Mai", "Pathum Thani"],
+    "Turkey": ["Istanbul", "Ankara", "Izmir", "Bursa", "Antalya", "Adana"],
+    "Ukraine": ["Kyiv", "Kharkiv", "Odesa", "Dnipro", "Donetsk"],
+    "United Arab Emirates": ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah"],
+    "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
+    "United States": ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"],
+    "Vietnam": ["Hanoi", "Ho Chi Minh City", "Da Nang", "Hai Phong", "Can Tho"]
+  };
+
+  // ==================== INITIALIZE DATEPICKER ====================
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Flatpickr on DOB field
+    flatpickr("#dob", {
+      dateFormat: "d/m/Y",
+      maxDate: "today",
+      minDate: new Date().fp_incr(-36500),
+      defaultDate: null,
+      allowInput: false,
+      disableMobile: false,
+      onChange: function(selectedDates, dateStr, instance) {
+        console.log('Date selected:', dateStr);
+      },
+      locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+          shorthand: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+          longhand: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        },
+        months: {
+          shorthand: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          longhand: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        }
+      }
+    });
+
+    // Populate countries
+    populateCountries();
+  });
+
+  // ==================== HELPER FUNCTION TO UPDATE STATES ====================
+  function updateStates(country) {
+    const stateSelect = document.getElementById('state');
+    stateSelect.innerHTML = '<option value="">Select State</option>';
+    
+    if (countriesAndStates[country]) {
+      countriesAndStates[country].forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateSelect.appendChild(option);
+      });
+      console.log('States updated for:', country);
+    }
+  }
+
+  // ==================== POPULATE COUNTRIES ====================
+  function populateCountries() {
+    const countrySelect = document.getElementById('country');
+    const sortedCountries = Object.keys(countriesAndStates).sort();
+    
+    sortedCountries.forEach(country => {
+      const option = document.createElement('option');
+      option.value = country;
+      option.textContent = country;
+      countrySelect.appendChild(option);
+    });
+    
+    console.log('Countries loaded:', sortedCountries.length);
+  }
+
+  // ==================== UPDATE STATES BASED ON COUNTRY ====================
+  document.getElementById('country').addEventListener('change', function() {
+    console.log('Country changed to:', this.value);
+    updateStates(this.value);
+  });
+
+  // ==================== PHONE NUMBER VALIDATION (EXACTLY 10 DIGITS) ====================
+  const phoneInput = document.getElementById('phone');
+  const phoneInputWrapper = document.getElementById('phoneInputWrapper');
+  const phoneError = document.getElementById('phoneError');
+  
+  phoneInput.addEventListener('input', function(e) {
+    // Only allow numbers
+    let value = e.target.value.replace(/\D/g, '');
+    
+    // Limit to exactly 10 digits
+    if (value.length > 10) {
+      value = value.substring(0, 10);
+    }
+    
+    e.target.value = value;
+    
+    // Visual feedback
+    if (value.length === 10) {
+      phoneInputWrapper.classList.remove('error');
+      phoneInputWrapper.classList.add('success');
+      phoneError.style.display = 'none';
+    } else if (value.length > 0) {
+      phoneInputWrapper.classList.remove('success');
+      phoneInputWrapper.classList.add('error');
+      phoneError.style.display = 'block';
+    } else {
+      phoneInputWrapper.classList.remove('error', 'success');
+      phoneError.style.display = 'none';
+    }
+  });
+
+  phoneInput.addEventListener('blur', function(e) {
+    const value = e.target.value;
+    if (value.length > 0 && value.length !== 10) {
+      phoneInputWrapper.classList.add('error');
+      phoneError.style.display = 'block';
+    }
+  });
+
+  // ==================== FORMAT ADDRESS LINE 1 (ROAD, CITY) ====================
+  function formatAddressLine1(address) {
+    const parts = [];
+    
+    // Add road/street
+    if (address.road) {
+      parts.push(address.road);
+    } else if (address.street) {
+      parts.push(address.street);
+    } else if (address.highway) {
+      parts.push(address.highway);
+    } else if (address.pedestrian) {
+      parts.push(address.pedestrian);
+    }
+    
+    // Add specific location (neighbourhood or suburb)
+    if (address.neighbourhood) {
+      parts.push(address.neighbourhood);
+    } else if (address.suburb) {
+      parts.push(address.suburb);
+    }
+    
+    // Add city/town
+    if (address.city) {
+      parts.push(address.city);
+    } else if (address.town) {
+      parts.push(address.town);
+    } else if (address.village) {
+      parts.push(address.village);
+    }
+    
+    return parts.join(', ');
+  }
+
+  // ==================== GEOLOCATION WITH AUTO-FILL ====================
+  function getLocation() {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    const btn = document.getElementById('locationBtn');
+    const originalHTML = btn.innerHTML;
+    
+    btn.innerHTML = '<span><i class="fas fa-spinner fa-spin me-2"></i>Getting location...</span>';
+    btn.disabled = true;
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        
+        console.log('Coordinates:', { lat, lon });
+        
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1&zoom=18`,
+            {
+              headers: {
+                'User-Agent': 'MemberDetailsForm/1.0'
+              }
+            }
+          );
+          
+          if (!response.ok) throw new Error('Failed to fetch location data');
+          
+          const data = await response.json();
+          const address = data.address;
+          
+          console.log('Full Location Data:', data);
+          console.log('Address Details:', address);
+          
+          // ========== FILL ADDRESS LINE 1 (ROAD, CITY FORMAT) ==========
+          const formattedAddress = formatAddressLine1(address);
+          
+          if (formattedAddress) {
+            document.getElementById('address1').value = formattedAddress;
+            console.log('✓ Address Line 1 filled:', formattedAddress);
+          }
+          
+          // ========== FILL ADDRESS LINE 2 ==========
+          let addressLine2 = '';
+          if (address.house_number) {
+            addressLine2 = address.house_number;
+          } else if (address.building) {
+            addressLine2 = address.building;
+          } else if (address.hamlet) {
+            addressLine2 = address.hamlet;
+          } else if (address.quarter) {
+            addressLine2 = address.quarter;
+          }
+          
+          if (addressLine2) {
+            document.getElementById('address2').value = addressLine2;
+            console.log('✓ Address Line 2 filled:', addressLine2);
+          }
+          
+          // ========== FILL CITY ==========
+          const city = address.city || 
+                      address.town || 
+                      address.village || 
+                      address.municipality || 
+                      address.city_district ||
+                      address.county || '';
+          
+          if (city) {
+            document.getElementById('city').value = city;
+            console.log('✓ City filled:', city);
+          }
+          
+          // ========== FILL PINCODE ==========
+          if (address.postcode) {
+            document.getElementById('pincode').value = address.postcode;
+            console.log('✓ Pincode filled:', address.postcode);
+          }
+          
+          // ========== FILL COUNTRY ==========
+          const detectedCountry = address.country || '';
+          const countrySelect = document.getElementById('country');
+          let countryMatched = false;
+          
+          for (let i = 0; i < countrySelect.options.length; i++) {
+            const optionValue = countrySelect.options[i].value;
+            
+            if (optionValue.toLowerCase() === detectedCountry.toLowerCase()) {
+              countrySelect.value = optionValue;
+              countryMatched = true;
+              console.log('✓ Country matched:', optionValue);
+              break;
+            }
+          }
+          
+          if (!countryMatched && detectedCountry) {
+            for (let i = 0; i < countrySelect.options.length; i++) {
+              const optionValue = countrySelect.options[i].value.toLowerCase();
+              const detectedLower = detectedCountry.toLowerCase();
+              
+              if (optionValue.includes(detectedLower) || detectedLower.includes(optionValue)) {
+                countrySelect.value = countrySelect.options[i].value;
+                countryMatched = true;
+                console.log('✓ Country matched (partial):', countrySelect.options[i].value);
+                break;
+              }
+            }
+          }
+          
+          // ========== FILL STATE ==========
+          if (countryMatched) {
+            updateStates(countrySelect.value);
+            
+            setTimeout(() => {
+              const detectedState = address.state || 
+                                   address.state_district || 
+                                   address.region || 
+                                   address.province || '';
+              const stateSelect = document.getElementById('state');
+              
+              if (detectedState) {
+                let stateMatched = false;
+                
+                for (let i = 0; i < stateSelect.options.length; i++) {
+                  const optionValue = stateSelect.options[i].value;
+                  
+                  if (optionValue.toLowerCase() === detectedState.toLowerCase()) {
+                    stateSelect.value = optionValue;
+                    stateMatched = true;
+                    console.log('✓ State matched:', optionValue);
+                    break;
+                  }
+                }
+                
+                if (!stateMatched) {
+                  for (let i = 0; i < stateSelect.options.length; i++) {
+                    const optionValue = stateSelect.options[i].value.toLowerCase();
+                    const detectedLower = detectedState.toLowerCase();
+                    
+                    if (optionValue.includes(detectedLower) || detectedLower.includes(optionValue)) {
+                      stateSelect.value = stateSelect.options[i].value;
+                      console.log('✓ State matched (partial):', stateSelect.options[i].value);
+                      break;
+                    }
+                  }
+                }
+              }
+            }, 250);
+          }
+          
+          alert('✓ Location captured successfully!\n\nAddress fields have been auto-filled.');
+          
+        } catch (error) {
+          console.error('Error fetching location details:', error);
+          alert('⚠ Location found, but unable to fetch address details.\n\nPlease enter address manually.');
+        } finally {
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        
+        let errorMessage = '❌ Unable to get location.\n\n';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'Please allow location access in your browser settings.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'Location information is unavailable.';
+            break;
+          case error.TIMEOUT:
+            errorMessage += 'Location request timed out. Please try again.';
+            break;
+          default:
+            errorMessage += 'An unknown error occurred.';
+        }
+        
+        alert(errorMessage);
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  // ==================== FORM SUBMISSION ====================
+  document.getElementById('memberForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    console.log('Member details submitted:', data);
+    
+    // Validate date format
+    const dobPattern = /^\d{2}\/\d{2}\/\d{4}$/;
+    if (!dobPattern.test(data.dob)) {
+      alert('Please select a valid date of birth');
+      return;
+    }
+    
+    // Validate phone number - EXACTLY 10 digits
+    if (data.phone.length !== 10) {
+      alert('Phone number must be exactly 10 digits');
+      phoneInputWrapper.classList.add('error');
+      phoneError.style.display = 'block';
+      phoneInput.focus();
+      return;
+    }
+    
+    // Production: Send to backend
+    // fetch('/enter-member-details', {
+    //   method: 'POST',
+    //   headers: { 
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(data)
+    // })
+    // .then(response => response.json())
+    // .then(result => {
+    //   if (result.success) {
+    //     window.location.href = '/enter-patient-details';
+    //   }
+    // });
+    
+    alert('✓ Member details saved successfully!');
+    window.location.href = '/';
+  });
+</script>
+{% endblock %}
