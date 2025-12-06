@@ -1,0 +1,15 @@
+model : "caregiver_language"
+
+caregiver_language_id(pk,auto_incr)
+language_id(fk references system_language)
+caregiver_id(fk references caregiver_info)
+
+model: "caregiver_payments"
+
+payment_id(pk,auto_incr)
+card_name
+card_number
+expiry_date
+cvv
+set_primary(either 0 or 1 , default=0)
+caregiver_id(fk references caregiver_info)

@@ -1,21 +1,3 @@
-# from django.http import HttpResponse
-
-# # Simple home page view
-# def home(request):
-#     return HttpResponse("Welcome to Caredac API! Connected Successfully!!")
-
-# def caregiver_login(request):
-#     return HttpResponse("Caregiver Login Page")
-
-# def patient_login(request):
-#     return HttpResponse("Patient Login Page")
-
-# def admin_login(request):
-#     return HttpResponse("Admin Login Page")
-
-# def otp_verification(request):
-#     return HttpResponse("OTP Verification Page")
-
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -37,15 +19,6 @@ def generate_otp():
 # ----------------------------
 def home(request):
     return HttpResponse("Welcome to Caredac API! Connected Successfully!!")
-
-def caregiver_login(request):
-    return HttpResponse("Caregiver Login Page")
-
-def patient_login(request):
-    return HttpResponse("Patient Login Page")
-
-def admin_login(request):
-    return HttpResponse("Admin Login Page")
 
 @api_view(['POST'])
 def otp_verification(request):
