@@ -1,0 +1,588 @@
+select query for availability
+
+SELECT 
+    ca.availability_id,
+    ca.caregiver_id,
+    ca.date,
+    ca.start_time,
+    ca.end_time,
+    ca.child_count,
+    ca.child_age_service,
+    ca.time_offering,
+
+    -- Skills
+    GROUP_CONCAT(DISTINCT s.name) AS skills,
+    
+    -- Preferences
+    GROUP_CONCAT(DISTINCT p.name) AS preferences,
+    
+    -- Languages
+    GROUP_CONCAT(DISTINCT l.name) AS languages,
+    
+    -- Services
+    GROUP_CONCAT(DISTINCT so.services) AS services
+
+FROM caregiver_availability AS ca
+
+-- Join Skills
+LEFT JOIN caregiver_availability_skills AS cas
+    ON ca.availability_id = cas.caregiveravailability_id
+LEFT JOIN caregiver_skills AS s
+    ON cas.skill_id = s.id
+
+-- Join Preferences
+LEFT JOIN caregiver_availability_preferences_accepted AS cap
+    ON ca.availability_id = cap.caregiveravailability_id
+LEFT JOIN caregiver_preferences AS p
+    ON cap.preference_id = p.id
+
+-- Join Languages
+LEFT JOIN caregiver_availability_languages_known AS cal
+    ON ca.availability_id = cal.caregiveravailability_id
+LEFT JOIN caregiver_languages AS l
+    ON cal.language_id = l.id
+
+-- Join Services
+LEFT JOIN caregiver_availability_services_offering AS caso
+    ON ca.availability_id = caso.caregiveravailability_id
+LEFT JOIN services_offered AS so
+    ON caso.servicesoffered_id = so.services_id
+
+GROUP BY ca.availability_id, ca.caregiver_id, ca.date, ca.start_time, ca.end_time, ca.child_count, ca.child_age_service, ca.time_offering
+ORDER BY ca.caregiver_id;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Got it! You want a **new filter API** for `CaregiverAvailability` with a custom query, not the basic one. Let’s create a **dedicated filter API** that allows flexible filtering on date, caregiver, child age, skills, preferences, languages, and services.
+
+---
+
+### 1️⃣ Serializer (Same as before)
+
+```python
+from rest_framework import serializers
+from .models import CaregiverAvailability
+
+class CaregiverAvailabilitySerializer(serializers.ModelSerializer):
+    skills = serializers.SerializerMethodField()
+    preferences = serializers.SerializerMethodField()
+    languages = serializers.SerializerMethodField()
+    services = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CaregiverAvailability
+        fields = [
+            "availability_id", "caregiver", "date", "start_time", "end_time",
+            "child_count", "child_age_service", "time_offering",
+            "skills", "preferences", "languages", "services"
+        ]
+
+    def get_skills(self, obj):
+        return [s.name for s in obj.skills.all()]
+
+    def get_preferences(self, obj):
+        return [p.name for p in obj.preferences_accepted.all()]
+
+    def get_languages(self, obj):
+        return [l.name for l in obj.languages_known.all()]
+
+    def get_services(self, obj):
+        return [so.services for so in obj.services_offering.all()]
+```
+
+---
+
+### 2️⃣ Filter API View
+
+```python
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.db.models import Q
+from .models import CaregiverAvailability
+from .serializers import CaregiverAvailabilitySerializer
+
+class CaregiverAvailabilityFilterView(APIView):
+    """
+    Custom API to filter CaregiverAvailability based on multiple criteria:
+    - caregiver_id
+    - date range
+    - child_age_service
+    - skills
+    - preferences
+    - languages
+    - services
+    """
+
+    def get(self, request):
+        qs = CaregiverAvailability.objects.all()
+        params = request.query_params
+
+        caregiver_id = params.get('caregiver_id')
+        start_date = params.get('start_date')
+        end_date = params.get('end_date')
+        child_age = params.get('child_age_service')
+        skill = params.get('skill')
+        preference = params.get('preference')
+        language = params.get('language')
+        service = params.get('service')
+
+        # Filter dynamically
+        if caregiver_id:
+            qs = qs.filter(caregiver_id=caregiver_id)
+        if start_date and end_date:
+            qs = qs.filter(date__range=[start_date, end_date])
+        if child_age:
+            qs = qs.filter(child_age_service=child_age)
+        if skill:
+            qs = qs.filter(skills__name=skill)
+        if preference:
+            qs = qs.filter(preferences_accepted__name=preference)
+        if language:
+            qs = qs.filter(languages_known__name=language)
+        if service:
+            qs = qs.filter(services_offering__services=service)
+
+        qs = qs.distinct()  # Avoid duplicates due to M2M joins
+
+        serializer = CaregiverAvailabilitySerializer(qs, many=True)
+        return Response(serializer.data)
+```
+
+---
+
+### 3️⃣ URL
+
+```python
+from django.urls import path
+from .views import CaregiverAvailabilityFilterView
+
+urlpatterns = [
+    path('api/availability/filter/', CaregiverAvailabilityFilterView.as_view(), name='availability-filter'),
+]
+```
+
+---
+
+### 4️⃣ Example API Requests
+
+**Get all availability**
+
+```
+GET /api/availability/filter/
+```
+
+**Filter by caregiver**
+
+```
+GET /api/availability/filter/?caregiver_id=5
+```
+
+**Filter by date range**
+
+```
+GET /api/availability/filter/?start_date=2025-12-10&end_date=2025-12-31
+```
+
+**Filter by skill**
+
+```
+GET /api/availability/filter/?skill=CR Training
+```
+
+**Filter by multiple parameters**
+
+```
+GET /api/availability/filter/?caregiver_id=5&skill=CR Training&child_age_service=0-11 months
+```
+
+---
+
+✅ Features of this **custom filter API**:
+
+* Works with **any combination** of filters.
+* Returns **aggregated M2M fields** as lists of text (skills, preferences, languages, services).
+* Uses **distinct()** to prevent duplicate rows due to joins.
+
+---
+
+If you want, I can also **rewrite it to accept multiple comma-separated values** for skills, services, preferences, and languages for advanced filtering in Postman.
+
+Do you want me to do that?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ah! Now I understand clearly — you **already have the `CaregiverAvailability` list endpoint working**, but your **filter endpoint isn’t showing any data** and your **filters aren’t visible in the browsable API**. This is a very common situation in Django REST Framework (DRF) when filters aren’t properly integrated.
+
+Let’s solve it step by step.
+
+---
+
+## 1️⃣ Use **Django Filter Backend**
+
+DRF does **not automatically show filters** in the browsable API unless you explicitly add them. The cleanest way is to use [`django-filter`](https://django-filter.readthedocs.io/en/stable/).
+
+First, make sure `django-filter` is installed:
+
+```bash
+pip install django-filter
+```
+
+Then, in your **settings.py**:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
+```
+
+---
+
+## 2️⃣ Create a FilterSet
+
+Create a **filter class** for `CaregiverAvailability`. For example:
+
+```python
+# filters.py
+import django_filters
+from communication.models import CaregiverAvailability
+
+class CaregiverAvailabilityFilter(django_filters.FilterSet):
+    date = django_filters.DateFilter(field_name='date', lookup_expr='exact')
+    start_time = django_filters.TimeFilter(field_name='start_time', lookup_expr='gte')
+    end_time = django_filters.TimeFilter(field_name='end_time', lookup_expr='lte')
+    child_count = django_filters.NumberFilter(field_name='child_count')
+    child_age_service = django_filters.CharFilter(field_name='child_age_service', lookup_expr='icontains')
+    time_offering = django_filters.NumberFilter(field_name='time_offering')
+    caregiver = django_filters.NumberFilter(field_name='caregiver_id')
+
+    skills = django_filters.CharFilter(method='filter_skills')
+    preferences_accepted = django_filters.CharFilter(method='filter_preferences')
+    languages_known = django_filters.CharFilter(method='filter_languages')
+    services_offering = django_filters.CharFilter(method='filter_services')
+
+    class Meta:
+        model = CaregiverAvailability
+        fields = []
+
+    def filter_skills(self, queryset, name, value):
+        skills = value.split(',')
+        return queryset.filter(skills__name__in=skills).distinct()
+
+    def filter_preferences(self, queryset, name, value):
+        prefs = value.split(',')
+        return queryset.filter(preferences_accepted__name__in=prefs).distinct()
+
+    def filter_languages(self, queryset, name, value):
+        langs = value.split(',')
+        return queryset.filter(languages_known__name__in=langs).distinct()
+
+    def filter_services(self, queryset, name, value):
+        services = value.split(',')
+        return queryset.filter(services_offering__services__in=services).distinct()
+```
+
+* Note: For **many-to-many fields**, we use a custom method.
+* Multiple values can be passed as a **comma-separated string**:
+
+```
+?skills=cr_training,first_aid_training
+```
+
+---
+
+## 3️⃣ Update Your View
+
+Use **`DjangoFilterBackend`** in your view:
+
+```python
+# views.py
+from rest_framework import generics
+from communication.models import CaregiverAvailability
+from communication.serializers import CaregiverAvailabilitySerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import CaregiverAvailabilityFilter
+
+class CaregiverAvailabilityList(generics.ListAPIView):
+    queryset = CaregiverAvailability.objects.all()
+    serializer_class = CaregiverAvailabilitySerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CaregiverAvailabilityFilter
+```
+
+* This automatically **adds filters in the browsable API**.
+* You can now filter by query parameters like `?date=2025-12-10&skills=cr_training`.
+
+---
+
+## 4️⃣ Example Requests
+
+**Single filter:**
+
+```
+GET /communication/api/availability/?date=2025-12-10
+```
+
+**Multiple skills:**
+
+```
+GET /communication/api/availability/?skills=cr_training,first_aid_training
+```
+
+**Multiple filters combined:**
+
+```
+GET /communication/api/availability/?date=2025-12-10&child_age_service=0-11 months&skills=cr_training
+```
+
+---
+
+✅ This approach:
+
+* Shows filters in the **browsable API**.
+* Works for **both single and many-to-many filters**.
+* Returns proper JSON response instead of `"No data found"`.
+
+---
+
+If you want, I can **rewrite your current POST-based filter API** so that the user can **send a JSON payload** with all filters instead of using query params — which is often better for mobile apps.
+
+Do you want me to do that next?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ah! Now I understand clearly — you **already have the `CaregiverAvailability` list endpoint working**, but your **filter endpoint isn’t showing any data** and your **filters aren’t visible in the browsable API**. This is a very common situation in Django REST Framework (DRF) when filters aren’t properly integrated.
+
+Let’s solve it step by step.
+
+---
+
+## 1️⃣ Use **Django Filter Backend**
+
+DRF does **not automatically show filters** in the browsable API unless you explicitly add them. The cleanest way is to use [`django-filter`](https://django-filter.readthedocs.io/en/stable/).
+
+First, make sure `django-filter` is installed:
+
+```bash
+pip install django-filter
+```
+
+Then, in your **settings.py**:
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
+```
+
+---
+
+## 2️⃣ Create a FilterSet
+
+Create a **filter class** for `CaregiverAvailability`. For example:
+
+```python
+# filters.py
+import django_filters
+from communication.models import CaregiverAvailability
+
+class CaregiverAvailabilityFilter(django_filters.FilterSet):
+    date = django_filters.DateFilter(field_name='date', lookup_expr='exact')
+    start_time = django_filters.TimeFilter(field_name='start_time', lookup_expr='gte')
+    end_time = django_filters.TimeFilter(field_name='end_time', lookup_expr='lte')
+    child_count = django_filters.NumberFilter(field_name='child_count')
+    child_age_service = django_filters.CharFilter(field_name='child_age_service', lookup_expr='icontains')
+    time_offering = django_filters.NumberFilter(field_name='time_offering')
+    caregiver = django_filters.NumberFilter(field_name='caregiver_id')
+
+    skills = django_filters.CharFilter(method='filter_skills')
+    preferences_accepted = django_filters.CharFilter(method='filter_preferences')
+    languages_known = django_filters.CharFilter(method='filter_languages')
+    services_offering = django_filters.CharFilter(method='filter_services')
+
+    class Meta:
+        model = CaregiverAvailability
+        fields = []
+
+    def filter_skills(self, queryset, name, value):
+        skills = value.split(',')
+        return queryset.filter(skills__name__in=skills).distinct()
+
+    def filter_preferences(self, queryset, name, value):
+        prefs = value.split(',')
+        return queryset.filter(preferences_accepted__name__in=prefs).distinct()
+
+    def filter_languages(self, queryset, name, value):
+        langs = value.split(',')
+        return queryset.filter(languages_known__name__in=langs).distinct()
+
+    def filter_services(self, queryset, name, value):
+        services = value.split(',')
+        return queryset.filter(services_offering__services__in=services).distinct()
+```
+
+* Note: For **many-to-many fields**, we use a custom method.
+* Multiple values can be passed as a **comma-separated string**:
+
+```
+?skills=cr_training,first_aid_training
+```
+
+---
+
+## 3️⃣ Update Your View
+
+Use **`DjangoFilterBackend`** in your view:
+
+```python
+# views.py
+from rest_framework import generics
+from communication.models import CaregiverAvailability
+from communication.serializers import CaregiverAvailabilitySerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import CaregiverAvailabilityFilter
+
+class CaregiverAvailabilityList(generics.ListAPIView):
+    queryset = CaregiverAvailability.objects.all()
+    serializer_class = CaregiverAvailabilitySerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CaregiverAvailabilityFilter
+```
+
+* This automatically **adds filters in the browsable API**.
+* You can now filter by query parameters like `?date=2025-12-10&skills=cr_training`.
+
+---
+
+## 4️⃣ Example Requests
+
+**Single filter:**
+
+```
+GET /communication/api/availability/?date=2025-12-10
+```
+
+**Multiple skills:**
+
+```
+GET /communication/api/availability/?skills=cr_training,first_aid_training
+```
+
+**Multiple filters combined:**
+
+```
+GET /communication/api/availability/?date=2025-12-10&child_age_service=0-11 months&skills=cr_training
+```
+
+---
+
+✅ This approach:
+
+* Shows filters in the **browsable API**.
+* Works for **both single and many-to-many filters**.
+* Returns proper JSON response instead of `"No data found"`.
+
+---
+
+If you want, I can **rewrite your current POST-based filter API** so that the user can **send a JSON payload** with all filters instead of using query params — which is often better for mobile apps.
+
+Do you want me to do that next?

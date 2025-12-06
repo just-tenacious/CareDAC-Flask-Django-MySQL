@@ -1,198 +1,203 @@
 from django.db import models
-from caredac_admin.models import SystemLanguage
 
-# Choices for member relationship
-relationship_choices = (
-    ('Self', 'Self'),
-    ('Child', 'Child'),
-    ('Partner', 'Partner'),
-    ('Client', 'Client'),
-    ('Other', 'Other')
-)
 
-# User master table
-class UserMaster(models.Model):
-    user_id = models.AutoField(primary_key=True)
-    full_name = models.CharField(max_length=150)
-    dob = models.DateField(null=True, blank=True)
+# ---------------------------------------------------
+# Patient Master
+# ---------------------------------------------------
+class PatientMaster(models.Model):
+    patient_id = models.AutoField(primary_key=True)
+    full_name = models.CharField(max_length=255)
+    dob = models.DateField()
     email = models.EmailField(unique=True)
-    phone_no = models.CharField(max_length=15)
-    emergency_no = models.CharField(max_length=15, null=True, blank=True)
+    phone = models.CharField(max_length=20)
     password = models.CharField(max_length=255)
-    gender = models.CharField(max_length=10)
+    gender = models.CharField(max_length=20)
     address = models.TextField()
-    country = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    city = models.CharField(max_length=100)
-    pincode = models.CharField(max_length=10)
-    acc_status = models.IntegerField(default=0)
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    pincode = models.CharField(max_length=20)
 
     class Meta:
-        db_table = "user_master"
+        db_table = "patient_master"
 
     def __str__(self):
         return self.full_name
 
 
-# User languages
-class UserLanguage(models.Model):
-    user_lang_id = models.AutoField(primary_key=True)
-    lang = models.ForeignKey(SystemLanguage, on_delete=models.CASCADE)
-    user = models.ForeignKey("patients.UserMaster", on_delete=models.CASCADE)
+# ---------------------------------------------------
+# Patient Language
+# ---------------------------------------------------
+class PatientLanguage(models.Model):
+    patient_language_id = models.AutoField(primary_key=True)
 
-    class Meta:
-        db_table = "user_language"
-
-
-# User payments
-class UserPayments(models.Model):
-    payment_id = models.AutoField(primary_key=True)
-    card_name = models.CharField(max_length=255)
-    card_number = models.CharField(max_length=20)
-    expiry_date = models.CharField(max_length=10)  # Example: MM/YY or MM/YYYY
-    cvv = models.CharField(max_length=4)
-    set_primary = models.IntegerField(default=0)  # 0 or 1
-
-    user = models.ForeignKey(
-        UserMaster,
+    language = models.ForeignKey(
+        'caredac_admin.SystemLanguage',
         on_delete=models.CASCADE,
-        db_column='user_id',
-        related_name='payments'
+        db_column='language_id'
+    )
+
+    patient = models.ForeignKey(
+        PatientMaster,
+        on_delete=models.CASCADE,
+        db_column='patient_id'
     )
 
     class Meta:
-        db_table = "user_payments"
+        db_table = "patient_language"
 
     def __str__(self):
-        return f"{self.card_name} - {self.card_number[-4:]}"
+        return f"{self.patient.full_name}"
 
 
-# Member details with relation field
+# ---------------------------------------------------
+# Member Details
+# ---------------------------------------------------
 class MemberDetails(models.Model):
-    member_id = models.AutoField(primary_key=True)
-    full_name = models.CharField(max_length=150)
-    dob = models.DateField(null=True, blank=True)
-    email = models.EmailField(unique=True)
-    phone_no = models.CharField(max_length=15)
-    emergency_no = models.CharField(max_length=15, null=True, blank=True)
-    password = models.CharField(max_length=255)
-    gender = models.CharField(max_length=10)
-    address = models.TextField()
-    country = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    city = models.CharField(max_length=100)
-    pincode = models.CharField(max_length=10)
-    acc_status = models.IntegerField(default=0)
-    relation = models.CharField(
-        max_length=20,
-        choices=relationship_choices,
-        default='Self'
-    )
+    RELATION_CHOICES = [
+        ('self', 'Self'),
+        ('child', 'Child'),
+        ('partner', 'Partner'),
+        ('client', 'Client'),
+        ('other', 'Other'),
+    ]
 
-    # Foreign key to UserMaster
-    user = models.ForeignKey(
-        UserMaster,
+    member_id = models.AutoField(primary_key=True)
+    full_name = models.CharField(max_length=255)
+    dob = models.DateField()
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    password = models.CharField(max_length=255)
+    gender = models.CharField(max_length=20)
+    address = models.TextField()
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    pincode = models.CharField(max_length=20)
+    relation = models.CharField(max_length=20, choices=RELATION_CHOICES)
+
+    patient = models.ForeignKey(
+        PatientMaster,
         on_delete=models.CASCADE,
-        db_column='user_id',
-        related_name='member_details'
+        db_column='patient_id'
     )
 
     class Meta:
-        db_table = "member_detail"
+        db_table = "member_details"
 
     def __str__(self):
         return f"{self.full_name} ({self.relation})"
 
 
-# from django.db import models
-# from caredac_admin.models import SystemLanguage
+# ---------------------------------------------------
+# Patient Payments
+# ---------------------------------------------------
+class PatientPayments(models.Model):
+    payment_id = models.AutoField(primary_key=True)
+    card_name = models.CharField(max_length=255)
+    card_number = models.CharField(max_length=16)
+    expiry_date = models.DateField()
+    cvv = models.CharField(max_length=3)
+    set_primary = models.BooleanField(default=False)
 
-# relationship_choices = (
-#     ('Self', 'Self'),
-#     ('Child', 'Child'),
-#     ('Partner', 'Partner'),
-#     ('Client', 'Client'),
-#     ('Other', 'Other')
-# )
+    patient = models.ForeignKey(
+        PatientMaster,
+        on_delete=models.CASCADE,
+        db_column='patient_id'
+    )
 
-# class UserMaster(models.Model):
-#     user_id = models.AutoField(primary_key=True)
-#     full_name = models.CharField(max_length=150)
-#     dob = models.DateField(null=True, blank=True)
-#     email = models.EmailField(unique=True)
-#     phone_no = models.CharField(max_length=15)
-#     emergency_no = models.CharField(max_length=15, null=True, blank=True)
-#     password = models.CharField(max_length=255)
-#     gender = models.CharField(max_length=10)
-#     address = models.TextField()
-#     country = models.CharField(max_length=100)
-#     state = models.CharField(max_length=100)
-#     city = models.CharField(max_length=100)
-#     pincode = models.CharField(max_length=10)
-#     acc_status = models.IntegerField(default=0)
+    class Meta:
+        db_table = "patient_payments"
 
-#     class Meta:
-#         db_table = "user_master"
-
-#     def __str__(self):
-#         return self.full_name
+    def __str__(self):
+        return f"Payment method for {self.patient.full_name}"
 
 
-# class UserLanguage(models.Model):
-#     user_lang_id = models.AutoField(primary_key=True)
-#     lang = models.ForeignKey(SystemLanguage, on_delete=models.CASCADE)
-#     user = models.ForeignKey("patients.UserMaster", on_delete=models.CASCADE)
+# ---------------------------------------------------
+# Patient Help
+# ---------------------------------------------------
+class PatientHelp(models.Model):
+    patient_help_id = models.AutoField(primary_key=True)
 
-#     class Meta:
-#         db_table = "user_language"
+    patient = models.ForeignKey(
+        PatientMaster,
+        on_delete=models.CASCADE,
+        db_column='patient_id',
+        null = True,
+        blank = True
+    )
 
-# class UserPayments(models.Model):
-#     payment_id = models.AutoField(primary_key=True)
-#     card_name = models.CharField(max_length=255)
-#     card_number = models.CharField(max_length=20)
-#     expiry_date = models.CharField(max_length=10)  # Example: MM/YY or MM/YYYY
-#     cvv = models.CharField(max_length=4)
-#     set_primary = models.IntegerField(default=0)  # 0 or 1
+    help = models.ForeignKey(   # NEW COLUMN
+        'caredac_admin.NeedHelp',
+        on_delete=models.CASCADE,
+        db_column='help_id',
+        null = True
+    )
 
-#     user = models.ForeignKey(
-#         UserMaster,
-#         on_delete=models.CASCADE,
-#         db_column='user_id',
-#         related_name='payments'
-#     )
+    class Meta:
+        db_table = "patient_help"
 
-#     class Meta:
-#         db_table = "user_payments"
+    def __str__(self):
+        return f"Help for {self.patient.full_name}"
 
-#     def __str__(self):
-#         return f"{self.card_name} - {self.card_number[-4:]}"
 
-# class MemberDetails(models.Model):
-#     member_id = models.AutoField(primary_key=True)
-#     full_name = models.CharField(max_length=150)
-#     dob = models.DateField(null=True, blank=True)
-#     email = models.EmailField(unique=True)
-#     phone_no = models.CharField(max_length=15)
-#     emergency_no = models.CharField(max_length=15, null=True, blank=True)
-#     password = models.CharField(max_length=255)
-#     gender = models.CharField(max_length=10)
-#     address = models.TextField()
-#     country = models.CharField(max_length=100)
-#     state = models.CharField(max_length=100)
-#     city = models.CharField(max_length=100)
-#     pincode = models.CharField(max_length=10)
-#     acc_status = models.IntegerField(default=0)
 
-#     # Foreign key to UserMaster
-#     user = models.ForeignKey(
-#         UserMaster,
-#         on_delete=models.CASCADE,
-#         db_column='user_id',
-#         related_name='member_details'
-#     )
+# ---------------------------------------------------
+# Patient Service
+# ---------------------------------------------------
+class PatientService(models.Model):
+    patient_service_id = models.AutoField(primary_key=True)
 
-#     class Meta:
-#         db_table = "member_detail"
+    patient = models.ForeignKey(
+        PatientMaster,
+        on_delete=models.CASCADE,
+        db_column='patient_id'
+    )
 
-#     def __str__(self):
-#         return self.full_name
+    services = models.TextField()  # CSV list of service IDs
+
+    class Meta:
+        db_table = "patient_service"
+
+    def __str__(self):
+        return f"Services for {self.patient.full_name}"
+
+
+# ---------------------------------------------------
+# Patient Condition
+# ---------------------------------------------------
+class PatientCondition(models.Model):
+    condition_id = models.AutoField(primary_key=True)
+    condition = models.TextField()
+
+    patient = models.ForeignKey(
+        PatientMaster,
+        on_delete=models.CASCADE,
+        db_column='patient_id'
+    )
+
+    class Meta:
+        db_table = "patient_condition"
+
+    def __str__(self):
+        return f"Condition for {self.patient.full_name}"
+
+
+# ---------------------------------------------------
+# Special Needs
+# ---------------------------------------------------
+class SpecialNeeds(models.Model):
+    special_need_id = models.AutoField(primary_key=True)
+    needs = models.TextField()
+
+    patient = models.ForeignKey(
+        PatientMaster,
+        on_delete=models.CASCADE,
+        db_column='patient_id'
+    )
+
+    class Meta:
+        db_table = "special_needs"
+
+    def __str__(self):
+        return f"Special Needs for {self.patient.full_name}"

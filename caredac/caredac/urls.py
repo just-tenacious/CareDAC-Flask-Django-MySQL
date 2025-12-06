@@ -1,21 +1,19 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.http import HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
-
-# Simple home page view
-def home(request):
-    return HttpResponse("Welcome to Caredac API! Connected Successfully!!")
+from caredac.views import home,otp_verification
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
+
     # API Routes
-    path('', home),
+    path('', home), 
+    path('otp_verification/',otp_verification, name='otp_verification'),
     path('caregiver/', include('caregiver.urls')),
     path('patients/', include('patients.urls')),
     path('caredac_admin/', include('caredac_admin.urls')),
+    path('communication/',include('communication.urls')),
 ]
 
 # Serve media files during development
